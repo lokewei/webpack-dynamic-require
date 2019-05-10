@@ -1,0 +1,46 @@
+{
+  "name": "webpack-dynamic-require",
+  "version": "1.0.0",
+  "description": "you can require cdn bundle dynamic",
+  "main": "lib/Dynamic.js",
+  "typings": "dist/Dynamic.d.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch",
+    "build": "npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lokewei/webpack-dynamic-require"
+  },
+  "keywords": [
+    "react"
+  ],
+  "author": {
+    "name": "lokewei",
+    "email": "air_fans@hotmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lokewei/webpack-dynamic-require"
+  },
+  "homepage": "https://github.com/lokewei/webpack-dynamic-require",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.4.0",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
+    "@babel/preset-env": "^7.4.1",
+    "@babel/preset-typescript": "^7.3.3",
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "@types/scriptjs": "^0.0.2",
+    "camelcase": "^5.3.1",
+    "fg-loadcss": "^2.1.0",
+    "jsonp-util": "^0.0.1",
+    "scriptjs": "^2.5.9"
+  }
+}
