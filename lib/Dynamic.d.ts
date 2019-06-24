@@ -12,4 +12,4 @@ export declare type JSONOpt = {
     cbKey?: string;
     cbVal?: string;
 };
-export declare function DynamicRequire(name: string, baseUrl: string, matcher: Function | RegExp): Promise<any>;
+export declare function DynamicRequire(name: string, baseUrl: string, hashed: boolean): Promise<any>;

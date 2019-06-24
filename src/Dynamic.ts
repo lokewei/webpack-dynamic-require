@@ -1,6 +1,7 @@
 import Scriptjs from 'scriptjs';
 import { loadCSS } from 'fg-loadcss';
 import camelCase from 'camelcase';
+import MurmurHash3 from 'imurmurhash';
 // import { Require, ParseModuleData } from './Main';
 export * from './Main';
 
@@ -98,10 +99,9 @@ function getBlurVersion(version:string) {
 // }
 // Object.assign(g.webpackData, _require_);
 
-export function DynamicRequire(name: string, baseUrl: string, matcher: Function | RegExp) {
+export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
   if (!name || !baseUrl) {
     throw new Error('DynamicRequire name and baseUrl paramters must setted');
-    return;
   }
   const jsonpCallback = camelCase(name.replace(/@/g, '$')).replace(/\//g, '_');
   const jsonpUrl = `${baseUrl}/jsonpmodules.js`;
@@ -110,7 +110,12 @@ export function DynamicRequire(name: string, baseUrl: string, matcher: Function 
   }).then(function(args) {
     const modules: string[] = args[0];
     const entry: string = args[1];
-    const entryModuleName = `${name}/${entry}`;
+    let entryModuleName = `${name}/${entry}`;
+    if (hashed) {
+      const hashState = new MurmurHash3();
+      hashState.hash(entryModuleName);
+      entryModuleName = hashState.result().toString(16).substr(0, 6);
+    }
     if (g.webpackData.c[entryModuleName]) {
       return Promise.resolve(g.webpackData.c[entryModuleName]);
     }
