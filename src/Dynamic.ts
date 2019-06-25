@@ -117,7 +117,9 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
       entryModuleName = hashState.result().toString(16).substr(0, 6);
     }
     if (g.webpackData.c[entryModuleName]) {
-      return Promise.resolve(g.webpackData.c[entryModuleName]);
+      // if webpack enable hmr above return { children, exports, hot ...}
+      const module = g.webpackData(entryModuleName);
+      return Promise.resolve(module.a || module);
     }
     const componentChunks = 'vendor.js,component.js';
     const componentCss = 'component.css';
