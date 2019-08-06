@@ -24,6 +24,36 @@ export type JSONOpt = {
   cbVal?: string;
 }
 
+/*! onloadCSS. (onload callback for loadCSS) [c]2017 Filament Group, Inc. MIT License */
+/* global navigator */
+/* exported onloadCSS */
+function onloadCSS(ss: any, callback?: () => void) {
+  let called: boolean | undefined;
+  function newcb() {
+    if (!called && callback) {
+      called = true;
+      callback.call(ss);
+    }
+  }
+  if (ss.addEventListener) {
+    ss.addEventListener("load", newcb);
+  }
+  if (ss.attachEvent) {
+    ss.attachEvent("onload", newcb);
+  }
+
+  // This code is for browsers that don’t support onload
+  // No support for onload (it'll bind but never fire):
+  //	* Android 4.3 (Samsung Galaxy S4, Browserstack)
+  //	* Android 4.2 Browser (Samsung Galaxy SIII Mini GT-I8200L)
+  //	* Android 2.3 (Pantech Burst P9070)
+
+  // Weak inference targets Android < 4.4
+  if ("isApplicationInstalled" in navigator && "onloadcssdefined" in ss) {
+    ss.onloadcssdefined(newcb);
+  }
+}
+
 
 const jsonp = (url: string, opt: JSONOpt = {}, fn?: Function) => {
 
@@ -85,7 +115,7 @@ const jsonp = (url: string, opt: JSONOpt = {}, fn?: Function) => {
   })
 }
 
-function getBlurVersion(version:string) {
+function getBlurVersion(version: string) {
   return version.split('.').map((v, i) => i > 0 ? 'x' : v).join('.');
 }
 // const _require_ = g.webpackData;
@@ -107,7 +137,7 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
   const jsonpUrl = `${baseUrl}/jsonpmodules.js`;
   return jsonp(jsonpUrl, {
     cbVal: jsonpCallback
-  }).then(function(args) {
+  }).then(function (args) {
     const modules: string[] = args[0];
     const entry: string = args[1];
     let entryModuleName = `${name}/${entry}`;
@@ -121,6 +151,7 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
       const module = g.webpackData(entryModuleName);
       return Promise.resolve(module.a || module);
     }
+
     const componentChunks = 'vendor.js,component.js';
     const componentCss = 'component.css';
     const needComboChunk: string[] = [];
@@ -136,27 +167,40 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
       }
     });
     // 先加载css
-    if (needComboCssChunk && needComboCssChunk.length) {
-      const comboCssChunks = needComboCssChunk.map(chunkName => `deps/${chunkName}.css`).join();
-      const comboCssUrl = `${baseUrl}/??${componentCss},${comboCssChunks}`;
-      loadCSS(comboCssUrl);
-    }
-    if (needComboChunk && needComboChunk.length) {
-      const comboChunks = needComboChunk.map(chunkName => `deps/${chunkName}.js`).join();
-      const comboUrl = `${baseUrl}/??${componentChunks},${comboChunks}`;
-      return new Promise((resolve, reject) => {
-        Scriptjs(comboUrl, () => {
-          try {
-            console.log('load combo js done', name);
-            const module = g.webpackData(entryModuleName);
-            resolve(module.a || module);
-          } catch(e) {
-            reject(e);
-          }
-        });
+    let ssPromise;
+    const comboCssChunks = needComboCssChunk.map(chunkName => `deps/${chunkName}.css`);
+    comboCssChunks.unshift(componentCss);
+    const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
+    const ss = loadCSS(comboCssUrl);
+    ssPromise = new Promise((resolve, reject) => {
+      onloadCSS(ss, () => {
+        resolve();
       });
-    }
-  }).catch(function(error: any) {
+      setTimeout(reject, 5000);
+    });
+
+    // 并行加载js
+    let jsPromise;
+    const comboChunks = needComboChunk.map(chunkName => `deps/${chunkName}.js`)
+    comboChunks.unshift(componentChunks); // 补上必须的组件资源
+    const comboUrl = `${baseUrl}/??${comboChunks.join()}`;
+    jsPromise = new Promise((resolve, reject) => {
+      Scriptjs(comboUrl, () => {
+        try {
+          console.log('load combo js done', name);
+          const module = g.webpackData(entryModuleName);
+          resolve(module.a || module);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    return Promise.all([ssPromise, jsPromise]).then(([ss, module]) => {
+      return module;
+    }).catch(e => {
+      console.warn('bootload module error', e);
+    })
+  }).catch(function (error: any) {
     console.warn('load remote error');
     throw error
   })
