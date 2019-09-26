@@ -129,6 +129,25 @@ function getBlurVersion(version: string) {
 // }
 // Object.assign(g.webpackData, _require_);
 
+
+function loadComponentCss(baseUrl: string, styleId: string, needComboCssChunk: string[]) {
+  const componentCss = 'component.css';
+  const comboCssChunks = needComboCssChunk.map(chunkName => `deps/${chunkName}.css`);
+  comboCssChunks.unshift(componentCss);
+  const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
+
+
+  const ss = loadCSS(comboCssUrl);
+  // @ts-ignore
+  ss && ss.setAttribute('id', styleId);
+  return new Promise((resolve, reject) => {
+    onloadCSS(ss, () => {
+      resolve();
+    });
+    setTimeout(reject, 5000);
+  });
+}
+
 export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
   if (!name || !baseUrl) {
     throw new Error('DynamicRequire name and baseUrl paramters must setted');
@@ -151,21 +170,16 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
     const modules: string[] = args[0];
     const entry: string = args[1];
     let entryModuleName = `${name}/${entry}`;
+    const componentChunks = 'vendor.js,component.js';
+    const needComboCssChunk: string[] = [];
+    const needComboChunk: string[] = [];
+
     if (hashed) {
       const hashState = new MurmurHash3();
       hashState.hash(entryModuleName);
       entryModuleName = hashState.result().toString(16).substr(0, 6);
     }
-    if (g.webpackData.c[entryModuleName]) {
-      // if webpack enable hmr above return { children, exports, hot ...}
-      const module = g.webpackData(entryModuleName);
-      return Promise.resolve(module.a || module);
-    }
 
-    const componentChunks = 'vendor.js,component.js';
-    const componentCss = 'component.css';
-    const needComboChunk: string[] = [];
-    const needComboCssChunk: string[] = [];
     modules.forEach(([moduleName, chunkName, isCss]) => {
       const module = g.webpackData.c[moduleName];
       // 如果module不存在，放到module对应的chunk到combo信息里
@@ -176,21 +190,22 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
         needComboCssChunk.push(chunkName);
       }
     });
-    // 先加载css
-    let ssPromise;
-    const comboCssChunks = needComboCssChunk.map(chunkName => `deps/${chunkName}.css`);
-    comboCssChunks.unshift(componentCss);
-    const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
-    const ss = loadCSS(comboCssUrl);
-    // @ts-ignore
-    ss && ss.setAttribute('id', styleId);
-    ssPromise = new Promise((resolve, reject) => {
-      onloadCSS(ss, () => {
-        resolve();
-      });
-      setTimeout(reject, 5000);
-    });
 
+    // 已经加载过了的逻辑
+    if (g.webpackData.c[entryModuleName]) {
+      // if webpack enable hmr above return { children, exports, hot ...}
+      const module = g.webpackData(entryModuleName);
+      const csse = document.getElementById(styleId);
+      // 样式已经卸载，重新加载出来
+      if (!csse) {
+        loadComponentCss(baseUrl, styleId, needComboCssChunk);
+      }
+      return Promise.resolve(module.a || module);
+    }
+
+    // 新加载逻辑
+    // 加载css
+    const ssPromise = loadComponentCss(baseUrl, styleId, needComboCssChunk);
     // 并行加载js
     let jsPromise;
     const comboChunks = needComboChunk.map(chunkName => `deps/${chunkName}.js`)
