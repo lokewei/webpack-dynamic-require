@@ -135,6 +135,16 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
   }
   const jsonpCallback = camelCase(name.replace(/@/g, '$')).replace(/\//g, '_');
   const jsonpUrl = `${baseUrl}/jsonpmodules.js`;
+  const scriptId = `${name}_js`;
+  const styleId = `${name}_css`;
+  const uninstallFn = `${name}_uninstall`;
+  // @ts-ignore
+  window[uninstallFn] = () => {
+    const jse = document.getElementById(scriptId);
+    const csse = document.getElementById(styleId);
+    jse && jse.remove();
+    csse && csse.remove();
+  }
   return jsonp(jsonpUrl, {
     cbVal: jsonpCallback
   }).then(function (args) {
@@ -172,6 +182,8 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
     comboCssChunks.unshift(componentCss);
     const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
     const ss = loadCSS(comboCssUrl);
+    // @ts-ignore
+    ss && ss.setAttribute('id', styleId);
     ssPromise = new Promise((resolve, reject) => {
       onloadCSS(ss, () => {
         resolve();
