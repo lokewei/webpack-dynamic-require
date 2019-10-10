@@ -186,7 +186,7 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
       if (!module && needComboChunk.indexOf(chunkName) === -1) {
         needComboChunk.push(chunkName);
       }
-      if (!module && isCss && needComboCssChunk.indexOf(chunkName) === -1) {
+      if (isCss && needComboCssChunk.indexOf(chunkName) === -1) {
         needComboCssChunk.push(chunkName);
       }
     });
@@ -198,9 +198,12 @@ export function DynamicRequire(name: string, baseUrl: string, hashed: boolean) {
       const csse = document.getElementById(styleId);
       // 样式已经卸载，重新加载出来
       if (!csse) {
-        loadComponentCss(baseUrl, styleId, needComboCssChunk);
+        return loadComponentCss(baseUrl, styleId, needComboCssChunk).then(() => {
+          return module.a || module;
+        });
+      } else {
+        return Promise.resolve(module.a || module);
       }
-      return Promise.resolve(module.a || module);
     }
 
     // 新加载逻辑
