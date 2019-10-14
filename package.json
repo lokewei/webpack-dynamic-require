@@ -1,6 +1,6 @@
 {
   "name": "webpack-dynamic-require",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "you can require cdn bundle dynamic",
   "main": "lib/Dynamic.js",
   "typings": "dist/Dynamic.d.ts",
@@ -39,7 +39,6 @@
   "dependencies": {
     "@types/scriptjs": "^0.0.2",
     "camelcase": "^5.3.1",
-    "fg-loadcss": "^2.1.0",
     "imurmurhash": "^0.1.4",
     "jsonp-util": "^0.0.1",
     "scriptjs": "^2.5.9"

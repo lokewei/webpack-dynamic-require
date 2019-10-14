@@ -1,5 +1,4 @@
 import Scriptjs from 'scriptjs';
-import { loadCSS } from 'fg-loadcss';
 import camelCase from 'camelcase';
 import MurmurHash3 from 'imurmurhash';
 // import { Require, ParseModuleData } from './Main';
@@ -24,34 +23,21 @@ export type JSONOpt = {
   cbVal?: string;
 }
 
-/*! onloadCSS. (onload callback for loadCSS) [c]2017 Filament Group, Inc. MIT License */
-/* global navigator */
-/* exported onloadCSS */
-function onloadCSS(ss: any, callback?: () => void) {
-  let called: boolean | undefined;
-  function newcb() {
-    if (!called && callback) {
-      called = true;
-      callback.call(ss);
-    }
-  }
-  if (ss.addEventListener) {
-    ss.addEventListener("load", newcb);
-  }
-  if (ss.attachEvent) {
-    ss.attachEvent("onload", newcb);
-  }
+function loadCSS(url: string) {
+  const cssRoot = document.getElementsByTagName('head')[0];
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = url;
 
-  // This code is for browsers that don’t support onload
-  // No support for onload (it'll bind but never fire):
-  //	* Android 4.3 (Samsung Galaxy S4, Browserstack)
-  //	* Android 4.2 Browser (Samsung Galaxy SIII Mini GT-I8200L)
-  //	* Android 2.3 (Pantech Burst P9070)
+  cssRoot.appendChild(link);
 
-  // Weak inference targets Android < 4.4
-  if ("isApplicationInstalled" in navigator && "onloadcssdefined" in ss) {
-    ss.onloadcssdefined(newcb);
-  }
+  return new Promise<HTMLLinkElement>((resolve, reject) => {
+    link.addEventListener('error', () => {
+      reject(`load css error: ${url}`);
+    });
+    link.addEventListener('load', () => resolve(link));
+  });
+
 }
 
 
@@ -137,14 +123,8 @@ function loadComponentCss(baseUrl: string, styleId: string, needComboCssChunk: s
   const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
 
 
-  const ss = loadCSS(comboCssUrl);
-  // @ts-ignore
-  ss && ss.setAttribute('id', styleId);
-  return new Promise((resolve, reject) => {
-    onloadCSS(ss, () => {
-      resolve();
-    });
-    setTimeout(reject, 5000);
+  return loadCSS(comboCssUrl).then(link => {
+    link && link.setAttribute('id', styleId);
   });
 }
 
