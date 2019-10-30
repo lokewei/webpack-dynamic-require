@@ -12,4 +12,21 @@ export declare type JSONOpt = {
     cbKey?: string;
     cbVal?: string;
 };
-export declare function DynamicRequire(name: string, baseUrl: string, hashed: boolean): Promise<any>;
+export default class DynamicRequire {
+    baseUrl: string;
+    jsonpUrl: string;
+    hashed: boolean;
+    scriptId: string;
+    styleId: string;
+    jsPrefix?: string;
+    cssPrefix?: string;
+    uninstall: () => void;
+    constructor({ baseUrl, hashed, jsPrefix, cssPrefix }: {
+        baseUrl: string;
+        hashed?: boolean;
+        jsPrefix?: string;
+        cssPrefix?: string;
+    });
+    genHash(value: string): string;
+    require(name: string): Promise<any>;
+}
