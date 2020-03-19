@@ -115,8 +115,8 @@ function getBlurVersion(version: string) {
 // Object.assign(g.webpackData, _require_);
 
 
-function loadComponentCss(baseUrl: string, styleId: string, needComboCssChunk: string[], cssPrefix: string) {
-  const componentCss = `${cssPrefix}index.css`;
+function loadComponentCss(baseUrl: string, mainFile: string, styleId: string, needComboCssChunk: string[], cssPrefix: string) {
+  const componentCss = `${cssPrefix}${mainFile}.css`;
   const comboCssChunks = needComboCssChunk.map(chunkName => `${cssPrefix}deps/${chunkName}.css`);
   comboCssChunks.unshift(componentCss);
   const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
@@ -136,9 +136,10 @@ export default class DynamicRequire {
   styleId: string;
   jsPrefix?: string;
   cssPrefix?: string;
+  mainFile: string;
   uninstall: () => void;
 
-  constructor({ baseUrl, hashed, jsPrefix, cssPrefix }: { baseUrl: string, hashed?: boolean, jsPrefix?: string, cssPrefix?: string }) {
+  constructor({ baseUrl, hashed, jsPrefix, cssPrefix, mainFile }: { baseUrl: string, hashed?: boolean, jsPrefix?: string, cssPrefix?: string, mainFile?: string }) {
     if (!baseUrl) {
       throw new Error('DynamicRequire baseUrl paramters must setted');
     }
@@ -158,6 +159,7 @@ export default class DynamicRequire {
     this.hashed = hashed;
     this.jsPrefix = jsPrefix;
     this.cssPrefix = cssPrefix;
+    this.mainFile = mainFile || 'index';
     this.uninstall = unInstallFn;
   }
 
@@ -168,7 +170,7 @@ export default class DynamicRequire {
   }
 
   require(name: string) {
-    const { baseUrl, jsonpUrl, hashed, jsPrefix = '', cssPrefix = '', styleId } = this;
+    const { baseUrl, jsonpUrl, hashed, jsPrefix = '', cssPrefix = '', mainFile, styleId } = this;
     const jsonpCallback = camelCase(name.replace(/@/g, '$')).replace(/\//g, '_');
 
     return jsonp(jsonpUrl, {
@@ -177,7 +179,7 @@ export default class DynamicRequire {
       const modules: string[] = args[0];
       const entry: string = args[1];
       let entryModuleName = `${name}/${entry}`;
-      const componentChunks = `${jsPrefix}vendor.js,${jsPrefix}index.js`;
+      const componentChunks = `${jsPrefix}vendor.js,${jsPrefix}${mainFile}.js`;
       const needComboCssChunk: string[] = [];
       const needComboChunk: string[] = [];
 
@@ -203,7 +205,7 @@ export default class DynamicRequire {
         const csse = document.getElementById(styleId);
         // 样式已经卸载，重新加载出来
         if (!csse) {
-          return loadComponentCss(baseUrl, styleId, needComboCssChunk, cssPrefix).then(() => {
+          return loadComponentCss(baseUrl, mainFile, styleId, needComboCssChunk, cssPrefix).then(() => {
             return module.a || module;
           });
         } else {
@@ -213,7 +215,7 @@ export default class DynamicRequire {
   
       // 新加载逻辑
       // 加载css
-      const ssPromise = loadComponentCss(baseUrl, styleId, needComboCssChunk, cssPrefix);
+      const ssPromise = loadComponentCss(baseUrl, mainFile, styleId, needComboCssChunk, cssPrefix);
       // 并行加载js
       let jsPromise;
       const comboChunks = needComboChunk.map(chunkName => `${jsPrefix}deps/${chunkName}.js`)

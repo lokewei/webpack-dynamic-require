@@ -20,12 +20,14 @@ export default class DynamicRequire {
     styleId: string;
     jsPrefix?: string;
     cssPrefix?: string;
+    mainFile: string;
     uninstall: () => void;
-    constructor({ baseUrl, hashed, jsPrefix, cssPrefix }: {
+    constructor({ baseUrl, hashed, jsPrefix, cssPrefix, mainFile }: {
         baseUrl: string;
         hashed?: boolean;
         jsPrefix?: string;
         cssPrefix?: string;
+        mainFile?: string;
     });
     genHash(value: string): string;
     require(name: string): Promise<any>;
