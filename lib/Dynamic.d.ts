@@ -20,6 +20,7 @@ export default class DynamicRequire {
     styleId: string;
     jsPrefix?: string;
     cssPrefix?: string;
+    vendorCss?: boolean;
     mainFile: string;
     uninstall: () => void;
     constructor({ baseUrl, hashed, jsPrefix, cssPrefix, mainFile }: {

@@ -115,10 +115,13 @@ function getBlurVersion(version: string) {
 // Object.assign(g.webpackData, _require_);
 
 
-function loadComponentCss(baseUrl: string, mainFile: string, styleId: string, needComboCssChunk: string[], cssPrefix: string) {
+function loadComponentCss(baseUrl: string, mainFile: string, styleId: string, needComboCssChunk: string[], cssPrefix: string, vendorCss?: boolean) {
   const componentCss = `${cssPrefix}${mainFile}.css`;
   const comboCssChunks = needComboCssChunk.map(chunkName => `${cssPrefix}deps/${chunkName}.css`);
   comboCssChunks.unshift(componentCss);
+  if (vendorCss) {
+    comboCssChunks.unshift(`${cssPrefix}vendor.css`)
+  }
   const comboCssUrl = `${baseUrl}/??${comboCssChunks.join()}`;
 
 
@@ -136,6 +139,7 @@ export default class DynamicRequire {
   styleId: string;
   jsPrefix?: string;
   cssPrefix?: string;
+  vendorCss?: boolean;
   mainFile: string;
   uninstall: () => void;
 
@@ -170,7 +174,7 @@ export default class DynamicRequire {
   }
 
   require(name: string) {
-    const { baseUrl, jsonpUrl, hashed, jsPrefix = '', cssPrefix = '', mainFile, styleId } = this;
+    const { baseUrl, jsonpUrl, hashed, jsPrefix = '', cssPrefix = '', vendorCss,  mainFile, styleId } = this;
     const jsonpCallback = camelCase(name.replace(/@/g, '$')).replace(/\//g, '_');
 
     return jsonp(jsonpUrl, {
@@ -186,7 +190,7 @@ export default class DynamicRequire {
       if (hashed) {
         entryModuleName = this.genHash(entryModuleName);
       }
-  
+
       modules.forEach(([moduleName, chunkName, isCss]) => {
         const module = g.webpackData.c[moduleName];
         // 如果module不存在，放到module对应的chunk到combo信息里
@@ -205,7 +209,7 @@ export default class DynamicRequire {
         const csse = document.getElementById(styleId);
         // 样式已经卸载，重新加载出来
         if (!csse) {
-          return loadComponentCss(baseUrl, mainFile, styleId, needComboCssChunk, cssPrefix).then(() => {
+          return loadComponentCss(baseUrl, mainFile, styleId, needComboCssChunk, cssPrefix, vendorCss).then(() => {
             return module.a || module;
           });
         } else {

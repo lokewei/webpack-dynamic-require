@@ -1,6 +1,6 @@
 {
   "name": "webpack-dynamic-require",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "you can require cdn bundle dynamic",
   "main": "lib/Dynamic.js",
   "typings": "lib/Dynamic.d.ts",
@@ -35,8 +35,8 @@
     "@babel/core": "^7.4.0",
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
-    "@babel/preset-env": "^7.4.1",
-    "@babel/preset-typescript": "^7.3.3",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-typescript": "^7.9.0",
     "typescript": "^3.3.3"
   },
   "dependencies": {
